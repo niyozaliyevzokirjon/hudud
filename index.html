@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Hudud · yugurib egallash</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+<style>
+*{box-sizing:border-box}
+html,body{height:100%;margin:0;font:15px system-ui,-apple-system,Segoe UI,Roboto,sans-serif}
+body{display:flex;flex-direction:column;background:#101712;color:#e8f0ea}
+#top{display:flex;gap:6px;padding:8px;padding-top:calc(8px + env(safe-area-inset-top,0px))}
+.stat{flex:1;background:#1a241d;border:1px solid #2b3a2f;border-radius:10px;padding:6px 8px}
+.stat b{display:block;font-size:17px}.stat span{font-size:11px;color:#8fa095}
+#map{flex:1;min-height:0}
+#bot{padding:8px;padding-bottom:calc(8px + env(safe-area-inset-bottom,0px));background:#101712}
+#msg{font-size:12px;color:#8fa095;min-height:16px;margin-bottom:6px}
+.row{display:flex;gap:6px}
+button{flex:1;padding:12px 6px;border-radius:10px;border:1px solid #2b3a2f;background:#1a241d;color:#e8f0ea;font-size:14px;font-weight:600}
+button.p{background:#1f9d55;border-color:#1f9d55;color:#fff}
+</style>
+</head>
+<body>
+<div id="top">
+<div class="stat"><b id="sA">0 m²</b><span>Jami hudud</span></div>
+<div class="stat"><b id="sD">0 m</b><span>Joriy yoʻl</span></div>
+<div class="stat"><b id="sN">0</b><span>Hududlar</span></div>
+</div>
+<div id="map"></div>
+<div id="bot">
+<div id="msg">Boshlash tugmasini bosing va yuring. Boshlangʻich nuqtaga 25 m qolganda halqa yopiladi.</div>
+<div class="row">
+<button class="p" id="bGo">Boshlash</button>
+<button id="bMe">Men</button>
+<button id="bSim">Sinov</button>
+<button id="bClr">Tozalash</button>
+</div>
+</div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<script>
+(function(){
+var R=6371000,K='hudud:v1',S={on:false,pts:[],terr:[],wid:null,sim:null,cur:null,follow:true};
+try{S.terr=JSON.parse(localStorage.getItem(K)||'[]')}catch(e){S.terr=[]}
+function save(){try{localStorage.setItem(K,JSON.stringify(S.terr))}catch(e){}}
+function rad(d){return d*Math.PI/180}
+function dist(a,b){var dl=rad(b[0]-a[0]),dn=rad(b[1]-a[1]),x=Math.sin(dl/2)*Math.sin(dl/2)+Math.cos(rad(a[0]))*Math.cos(rad(b[0]))*Math.sin(dn/2)*Math.sin(dn/2);return 2*R*Math.asin(Math.sqrt(x))}
+function area(ring){var o=ring[0],q=ring.map(function(p){return[(p[1]-o[1])*Math.cos(rad(o[0]))*111320,(p[0]-o[0])*110540]}),s=0;for(var i=0;i<q.length;i++){var a=q[i],b=q[(i+1)%q.length];s+=a[0]*b[1]-b[0]*a[1]}return Math.abs(s)/2}
+function plen(p){var s=0;for(var i=1;i<p.length;i++)s+=dist(p[i-1],p[i]);return s}
+function fmt(m){return m>=10000?(m/10000).toFixed(2)+' ga':Math.round(m)+' m²'}
+var $=function(i){return document.getElementById(i)};
+function msg(t){$('msg').textContent=t}
+
+var map=L.map('map',{zoomControl:false}).setView([40.3569,71.2842],14);
+L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'&copy; OpenStreetMap'}).addTo(map);
+L.control.zoom({position:'topright'}).addTo(map);
+var gT=L.layerGroup().addTo(map),
+ trail=L.polyline([],{color:'#e8590c',weight:5}).addTo(map),
+ me=L.circleMarker([0,0],{radius:8,color:'#fff',weight:3,fillColor:'#1c7ed6',fillOpacity:1}),
+ acc=L.circle([0,0],{radius:0,color:'#1c7ed6',weight:1,fillOpacity:.1}),
+ startM=L.circleMarker([0,0],{radius:6,color:'#e8590c',fillColor:'#e8590c',fillOpacity:1});
+map.on('dragstart',function(){S.follow=false});
+
+function draw(){
+ gT.clearLayers();
+ S.terr.forEach(function(t){L.polygon(t.ring,{color:'#3ddc84',weight:2,fillColor:'#3ddc84',fillOpacity:.35}).addTo(gT)});
+ trail.setLatLngs(S.pts);
+ if(S.pts.length){startM.setLatLng(S.pts[0]);if(!map.hasLayer(startM))startM.addTo(map)}else if(map.hasLayer(startM))map.removeLayer(startM);
+ var tot=S.terr.reduce(function(s,t){return s+t.area},0);
+ $('sA').textContent=fmt(tot);$('sN').textContent=S.terr.length;$('sD').textContent=Math.round(plen(S.pts))+' m';
+}
+function onPos(lat,lon,ac){
+ var p=[lat,lon];S.cur=p;
+ me.setLatLng(p);acc.setLatLng(p).setRadius(ac||0);
+ if(!map.hasLayer(me)){me.addTo(map);acc.addTo(map)}
+ if(S.follow)map.setView(p,Math.max(map.getZoom(),18));
+ if(ac&&ac>40){msg('GPS aniqligi past ('+Math.round(ac)+' m), iz yozilmadi.');return}
+ var l=S.pts[S.pts.length-1];
+ if(!l||dist(l,p)>=5)S.pts.push(p);
+ if(S.pts.length>=8&&plen(S.pts)>=100&&dist(S.pts[0],p)<=25){
+  var ring=S.pts.slice(),a=area(ring);
+  S.terr.push({ring:ring,area:a,t:Date.now()});save();
+  msg('Halqa yopildi! +'+fmt(a)+' hudud egallandi.');
+  S.pts=[p];
+ }else if(S.on)msg('Aniqlik: '+Math.round(ac||0)+' m');
+ draw();
+}
+function start(){
+ if(S.on)return stop();
+ if(!navigator.geolocation){msg('Brauzer GPS’ni qoʻllamaydi.');return}
+ S.pts=[];S.on=true;S.follow=true;$('bGo').textContent='Toʻxtatish';msg('GPS qidirilmoqda…');
+ S.wid=navigator.geolocation.watchPosition(function(e){onPos(e.coords.latitude,e.coords.longitude,e.coords.accuracy)},
+  function(er){msg('GPS xatosi: '+er.message+' (joylashuvga ruxsat bering)');stop()},
+  {enableHighAccuracy:true,maximumAge:1000,timeout:20000});
+}
+function stop(){
+ S.on=false;$('bGo').textContent='Boshlash';$('bSim').textContent='Sinov';
+ if(S.wid!=null){navigator.geolocation.clearWatch(S.wid);S.wid=null}
+ if(S.sim){clearInterval(S.sim);S.sim=null}
+ S.pts=[];draw();
+}
+function sim(){
+ if(S.sim){stop();return}
+ if(S.on)stop();
+ var base=S.cur||[40.3569,71.2842],n=0,off=S.terr.length*0.0012;
+ S.on=true;S.follow=true;$('bSim').textContent='Toʻxtatish';msg('Sinov: virtual yugurish…');
+ S.sim=setInterval(function(){
+  var a=n/36*2*Math.PI,r=0.0006;
+  onPos(base[0]+off+r*Math.sin(a),base[1]+r*1.3*(Math.cos(a)-1),5);
+  n++;if(n>38){clearInterval(S.sim);S.sim=null;S.on=false;$('bSim').textContent='Sinov'}
+ },250);
+}
+$('bGo').onclick=start;$('bSim').onclick=sim;
+$('bMe').onclick=function(){
+ S.follow=true;
+ if(S.cur){map.setView(S.cur,18);return}
+ if(!navigator.geolocation)return;
+ navigator.geolocation.getCurrentPosition(function(e){onPos(e.coords.latitude,e.coords.longitude,e.coords.accuracy)},
+  function(er){msg('GPS xatosi: '+er.message)},{enableHighAccuracy:true,timeout:15000});
+};
+$('bClr').onclick=function(){
+ if(!S.terr.length&&!S.pts.length)return;
+ if(!confirm('Barcha hududlar oʻchirilsinmi?'))return;
+ S.terr=[];S.pts=[];save();draw();msg('Tozalandi.');
+};
+draw();
+if(S.terr.length)map.fitBounds(L.latLngBounds(S.terr[S.terr.length-1].ring),{maxZoom:18});
+})();
+</script>
+</body>
+</html>
