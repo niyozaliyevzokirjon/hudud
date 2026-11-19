@@ -28,7 +28,7 @@ button.p{background:#1f9d55;border-color:#1f9d55;color:#fff}
 </div>
 <div id="map"></div>
 <div id="bot">
-<div id="msg">Boshlash tugmasini bosing va yuring. Boshlangʻich nuqtaga 25 m qolganda halqa yopiladi.</div>
+<div id="msg">Boshlash tugmasini bosing va yuring. Oʻz yoʻlingizni kesib oʻtsangiz yoki boshlangʻich nuqtaga 25 m qolsangiz, hudud yopiladi.</div>
 <div class="row">
 <button class="p" id="bGo">Boshlash</button>
 <button id="bMe">Men</button>
@@ -68,20 +68,46 @@ function draw(){
  var tot=S.terr.reduce(function(s,t){return s+t.area},0);
  $('sA').textContent=fmt(tot);$('sN').textContent=S.terr.length;$('sD').textContent=Math.round(plen(S.pts))+' m';
 }
+function seg(a,b,c,d){
+ var o=a,P=function(p){return[(p[1]-o[1])*Math.cos(rad(o[0]))*111320,(p[0]-o[0])*110540]},
+ A=P(a),B=P(b),C=P(c),D=P(d),
+ r=[B[0]-A[0],B[1]-A[1]],s=[D[0]-C[0],D[1]-C[1]],den=r[0]*s[1]-r[1]*s[0];
+ if(Math.abs(den)<1e-9)return null;
+ var t=((C[0]-A[0])*s[1]-(C[1]-A[1])*s[0])/den,u=((C[0]-A[0])*r[1]-(C[1]-A[1])*r[0])/den;
+ if(t<0||t>1||u<0||u>1)return null;
+ return[a[0]+t*(b[0]-a[0]),a[1]+t*(b[1]-a[1])];
+}
 function onPos(lat,lon,ac){
  var p=[lat,lon];S.cur=p;
  me.setLatLng(p);acc.setLatLng(p).setRadius(ac||0);
  if(!map.hasLayer(me)){me.addTo(map);acc.addTo(map)}
  if(S.follow)map.setView(p,Math.max(map.getZoom(),18));
  if(ac&&ac>40){msg('GPS aniqligi past ('+Math.round(ac)+' m), iz yozilmadi.');return}
- var l=S.pts[S.pts.length-1];
- if(!l||dist(l,p)>=5)S.pts.push(p);
- if(S.pts.length>=8&&plen(S.pts)>=100&&dist(S.pts[0],p)<=25){
+ var l=S.pts[S.pts.length-1],added=!l||dist(l,p)>=5,n,closed=false;
+ if(added)S.pts.push(p);
+ n=S.pts.length;
+ // 1) oʻz yoʻlini kesib oʻtsa
+ if(added&&n>=4){
+  var a1=S.pts[n-2];
+  for(var i=n-4;i>=0&&!closed;i--){
+   var X=seg(a1,p,S.pts[i],S.pts[i+1]);
+   if(X){
+    var rg=[X].concat(S.pts.slice(i+1,n-1)),ar=area(rg);
+    if(rg.length>=3&&plen(rg)>=40&&ar>=50){
+     S.terr.push({ring:rg,area:ar,t:Date.now()});save();
+     msg('Yoʻl kesishdi! +'+fmt(ar)+' hudud egallandi.');
+     S.pts=S.pts.slice(0,i+1).concat([X,p]);closed=true;
+    }
+   }
+  }
+ }
+ // 2) boshlangʻich nuqtaga qaytsa
+ if(!closed&&S.pts.length>=8&&plen(S.pts)>=100&&dist(S.pts[0],p)<=25){
   var ring=S.pts.slice(),a=area(ring);
   S.terr.push({ring:ring,area:a,t:Date.now()});save();
   msg('Halqa yopildi! +'+fmt(a)+' hudud egallandi.');
   S.pts=[p];
- }else if(S.on)msg('Aniqlik: '+Math.round(ac||0)+' m');
+ }else if(!closed&&S.on)msg('Aniqlik: '+Math.round(ac||0)+' m');
  draw();
 }
 function start(){
