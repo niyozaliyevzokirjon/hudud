@@ -59,12 +59,12 @@ label{font-size:12px;color:var(--mu)}
 <div class="scr on" id="sMap"><div id="map"></div>
 <button class="fab" id="bAv">👤</button><button class="fab" id="bMenu">☰</button><div id="msg"></div>
 <button class="fab" id="bLoc">📍</button><div id="pill"></div><button id="bGo"></button></div>
-<div class="scr" id="sSearch"><input id="q"><div class="soon"><div style="font-size:40px">🔍</div><span data-i="soon"></span></div></div>
+<div class="scr" id="sSearch"><input id="q" autocapitalize="none"><div id="qr"></div></div>
 <div class="scr" id="sAct"><div id="wk"><button id="wP">‹</button><b id="wL"></b><button id="wN">›</button></div><div id="days"></div>
 <div id="rw"><svg id="rings" width="170" height="170" viewBox="0 0 170 170"></svg><div class="leg" id="leg"></div></div>
 <div class="hw"><button id="hW"></button><button id="hH"></button></div></div>
 <div class="scr" id="sAch"><div class="card"><h3 data-i="today"></h3><div id="c1"></div></div><div class="card"><h3 id="c2h"></h3><div id="c2"></div></div></div>
-<div class="scr" id="sProf"><div style="display:flex;gap:14px;align-items:center;margin-bottom:10px"><label id="av"><u>+</u><input type="file" id="ph" accept="image/*" style="display:none"></label><div style="flex:1"><input id="pn"><input id="pr"></div></div>
+<div class="scr" id="sProf"><div class="card" id="auth"><div id="aIn"><input id="ae" type="email" placeholder="Email" autocapitalize="none"><input id="au" autocapitalize="none"><input id="ap" type="password"><button class="s" id="aS1" data-i="signin"></button><button class="s" id="aS2" data-i="signup"></button></div><div id="aOut" style="display:none"><b id="aMail"></b><label style="display:block;margin-top:8px"><input type="checkbox" id="aPub" style="width:auto"> <span data-i="pub"></span></label><button class="s" id="aS3" data-i="signout"></button></div><div id="aM" style="font-size:12px;color:var(--mu);margin-top:6px"></div></div><div style="display:flex;gap:14px;align-items:center;margin-bottom:10px"><label id="av"><u>+</u><input type="file" id="ph" accept="image/*" style="display:none"></label><div style="flex:1"><input id="pn"><input id="pr"></div></div>
 <div class="card"><input id="pp" type="tel"><input id="pe" type="email"><input id="pi"><label data-i="priv"></label></div>
 <div class="card soon" style="padding:24px" data-i="team"></div></div>
 </div>
@@ -79,13 +79,14 @@ label{font-size:12px;color:var(--mu)}
 <div id="lang"><div class="lw"><img src="icon-192.png" alt=""><h2>Hudud</h2><p style="color:var(--mu)">Tilni tanlang · Выберите язык · Choose language</p>
 <button data-l="uz">Oʻzbekcha</button><button data-l="ru">Русский</button><button data-l="en">English</button></div></div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.49.1/dist/umd/supabase.js"></script>
 <script>
 (function(){
-var K='start stop searching accLow acc gpsErr noGps cross closed simMsg confirm tmap tsearch tact tach cal steps dist kg cm enter today total tcount tarea rank soon pname region phone email insta team priv searchPh menu lang theme auto dark light goals gcal gst hgt wgt test wipe install about later u2 uha um ukm prof since'.split(' ');
+var K='start stop searching accLow acc gpsErr noGps cross closed simMsg confirm tmap tsearch tact tach cal steps dist kg cm enter today total tcount tarea rank soon pname region phone email insta team priv searchPh menu lang theme auto dark light goals gcal gst hgt wgt test wipe install about later u2 uha um ukm prof since signin signup signout uname pass needLogin noRes pub authErr okMail'.split(' ');
 var T={
-uz:'Boshlash|Toʻxtatish|GPS qidirilmoqda…|GPS aniqligi past ({0} m)|Aniqlik: {0} m|GPS xatosi: {0}|Brauzer GPS’ni qoʻllamaydi|Yoʻl kesishdi! +{0}|Halqa yopildi! +{0}|Sinov: virtual yugurish…|Barcha hududlar va tarix oʻchirilsinmi?|Xarita|Qidiruv|Faollik|Yutuqlar|Kaloriya|Qadamlar|Masofa|kg|sm|Kiriting|Bugun|Jami|Hududlar soni|Hudud hajmi|Reyting|Tez orada|Ism familiya|Hudud (shahar, viloyat)|Telefon|Email|Instagram|Jamoa, guruh, klan — tez orada|Bu maʼlumotlar hozircha faqat sizga koʻrinadi|Oʻyinchini qidirish…|Menyu|Til|Mavzu|Avto|Tungi|Yorugʻ|Maqsadlar|Kaloriya (kkal)|Qadamlar|Boʻy (sm)|Ogʻirlik (kg)|Sinov rejimi|Maʼlumotlarni oʻchirish|Oʻrnatish|Ilova haqida · v2.0|Tez orada: kirish, doʻstlar, maxfiylik|m²|ga|m|km|Profil|dan',
-ru:'Старт|Стоп|Поиск GPS…|Низкая точность GPS ({0} м)|Точность: {0} м|Ошибка GPS: {0}|Браузер не поддерживает GPS|Путь пересечён! +{0}|Круг замкнут! +{0}|Тест: виртуальный забег…|Удалить все территории и историю?|Карта|Поиск|Активность|Достижения|Калории|Шаги|Дистанция|кг|см|Введите|Сегодня|Всего|Количество зон|Площадь зон|Рейтинг|Скоро|Имя и фамилия|Регион (город, область)|Телефон|Email|Instagram|Команда, группа, клан — скоро|Эти данные пока видны только вам|Найти игрока…|Меню|Язык|Тема|Авто|Тёмная|Светлая|Цели|Калории (ккал)|Шаги|Рост (см)|Вес (кг)|Тестовый режим|Удалить данные|Установить|О приложении · v2.0|Скоро: вход, друзья, приватность|м²|га|м|км|Профиль|с',
-en:'Start|Stop|Searching for GPS…|Low GPS accuracy ({0} m)|Accuracy: {0} m|GPS error: {0}|No GPS support|Path crossed! +{0}|Loop closed! +{0}|Test: virtual run…|Delete all territories and history?|Map|Search|Activity|Achievements|Calories|Steps|Distance|kg|cm|Enter|Today|Total|Zones|Area|Rank|Soon|Full name|Region (city, state)|Phone|Email|Instagram|Team, group, clan — soon|This info is only visible to you for now|Find a player…|Menu|Language|Theme|Auto|Dark|Light|Goals|Calories (kcal)|Steps|Height (cm)|Weight (kg)|Test mode|Delete data|Install|About · v2.0|Soon: sign-in, friends, privacy|m²|ha|m|km|Profile|since'};
+uz:'Boshlash|Toʻxtatish|GPS qidirilmoqda…|GPS aniqligi past ({0} m)|Aniqlik: {0} m|GPS xatosi: {0}|Brauzer GPS’ni qoʻllamaydi|Yoʻl kesishdi! +{0}|Halqa yopildi! +{0}|Sinov: virtual yugurish…|Barcha hududlar va tarix oʻchirilsinmi?|Xarita|Qidiruv|Faollik|Yutuqlar|Kaloriya|Qadamlar|Masofa|kg|sm|Kiriting|Bugun|Jami|Hududlar soni|Hudud hajmi|Reyting|Tez orada|Ism familiya|Hudud (shahar, viloyat)|Telefon|Email|Instagram|Jamoa, guruh, klan — tez orada|Bu maʼlumotlar hozircha faqat sizga koʻrinadi|Oʻyinchini qidirish…|Menyu|Til|Mavzu|Avto|Tungi|Yorugʻ|Maqsadlar|Kaloriya (kkal)|Qadamlar|Boʻy (sm)|Ogʻirlik (kg)|Sinov rejimi|Maʼlumotlarni oʻchirish|Oʻrnatish|Ilova haqida · v2.0|Tez orada: kirish, doʻstlar, maxfiylik|m²|ga|m|km|Profil|dan|Kirish|Roʻyxatdan oʻtish|Chiqish|Foydalanuvchi nomi (a-z, 0-9, _)|Parol (kamida 6 belgi)|Qidirish uchun avval Profil sahifasida kiring|Hech kim topilmadi|Aloqa maʼlumotlarim hammaga koʻrinsin|Xato: {0}|Emailingizga tasdiqlash xati yuborildi',
+ru:'Старт|Стоп|Поиск GPS…|Низкая точность GPS ({0} м)|Точность: {0} м|Ошибка GPS: {0}|Браузер не поддерживает GPS|Путь пересечён! +{0}|Круг замкнут! +{0}|Тест: виртуальный забег…|Удалить все территории и историю?|Карта|Поиск|Активность|Достижения|Калории|Шаги|Дистанция|кг|см|Введите|Сегодня|Всего|Количество зон|Площадь зон|Рейтинг|Скоро|Имя и фамилия|Регион (город, область)|Телефон|Email|Instagram|Команда, группа, клан — скоро|Эти данные пока видны только вам|Найти игрока…|Меню|Язык|Тема|Авто|Тёмная|Светлая|Цели|Калории (ккал)|Шаги|Рост (см)|Вес (кг)|Тестовый режим|Удалить данные|Установить|О приложении · v2.0|Скоро: вход, друзья, приватность|м²|га|м|км|Профиль|с|Войти|Регистрация|Выйти|Имя пользователя (a-z, 0-9, _)|Пароль (не менее 6 символов)|Для поиска сначала войдите в Профиль|Никого не найдено|Показывать мои контакты всем|Ошибка: {0}|Письмо для подтверждения отправлено на email',
+en:'Start|Stop|Searching for GPS…|Low GPS accuracy ({0} m)|Accuracy: {0} m|GPS error: {0}|No GPS support|Path crossed! +{0}|Loop closed! +{0}|Test: virtual run…|Delete all territories and history?|Map|Search|Activity|Achievements|Calories|Steps|Distance|kg|cm|Enter|Today|Total|Zones|Area|Rank|Soon|Full name|Region (city, state)|Phone|Email|Instagram|Team, group, clan — soon|This info is only visible to you for now|Find a player…|Menu|Language|Theme|Auto|Dark|Light|Goals|Calories (kcal)|Steps|Height (cm)|Weight (kg)|Test mode|Delete data|Install|About · v2.0|Soon: sign-in, friends, privacy|m²|ha|m|km|Profile|since|Sign in|Sign up|Sign out|Username (a-z, 0-9, _)|Password (6+ characters)|Sign in on the Profile screen to search|No players found|Show my contacts to everyone|Error: {0}|Confirmation email sent'};
 for(var l in T){var a=T[l].split('|'),o={};K.forEach(function(k,i){o[k]=a[i]});T[l]=o}
 var $=function(i){return document.getElementById(i)},R=6371000;
 function ld(k,d){try{var v=JSON.parse(localStorage.getItem(k));return v==null?d:v}catch(e){return d}}
@@ -135,7 +136,7 @@ $('bLoc').onclick=function(){S.follow=true;if(S.cur){map.setView(S.cur,18);retur
 
 function go(n){document.querySelectorAll('.scr').forEach(function(e){e.classList.remove('on')});$('s'+n).classList.add('on');
  document.querySelectorAll('#nav button').forEach(function(b){b.classList.toggle('on',b.dataset.n===n)});
- if(n==='Map')setTimeout(function(){map.invalidateSize()},50);if(n==='Act')rAct();if(n==='Ach')rAch();if(n==='Prof')rProf()}
+ if(n==='Map')setTimeout(function(){map.invalidateSize()},50);if(n==='Act')rAct();if(n==='Ach')rAch();if(n==='Prof')rProf();if(n==='Search')doSearch()}
 document.querySelectorAll('#nav button').forEach(function(b){b.onclick=function(){go(b.dataset.n)}});
 function openMenu(){rMenu();$('menu').style.display='block'}
 $('bAv').onclick=function(){go('Prof')};$('bMenu').onclick=openMenu;$('mx').onclick=function(){$('menu').style.display='none';rAct()};
@@ -156,8 +157,8 @@ function rAch(){var s=dayStat(dk(new Date())),tm=0,ta=0;for(var k in D)tm+=D[k];
  $('c2h').textContent=t('total')+' · '+t('since')+' '+FIRST;$('c2').innerHTML=rows([[t('dist'),fd(tm)],[t('tcount'),S.terr.length],[t('tarea'),fa(ta)],[t('rank'),rk]])}
 function rProf(){$('pn').value=P.name;$('pr').value=P.region;$('pp').value=P.phone;$('pe').value=P.email;$('pi').value=P.insta;pav()}
 function pav(){var u=P.photo?'url('+P.photo+')':'';$('av').style.backgroundImage=u;$('av').classList.toggle('h',!!P.photo);$('bAv').style.backgroundImage=u;$('bAv').textContent=P.photo?'':'👤'}
-[['pn','name'],['pr','region'],['pp','phone'],['pe','email'],['pi','insta']].forEach(function(f){$(f[0]).oninput=function(){P[f[1]]=this.value;sv('hudud:p',P)}});
-$('ph').onchange=function(){var f=this.files[0];if(!f)return;var r=new FileReader();r.onload=function(){var im=new Image();im.onload=function(){var c=document.createElement('canvas'),s=Math.min(im.width,im.height);c.width=c.height=160;c.getContext('2d').drawImage(im,(im.width-s)/2,(im.height-s)/2,s,s,0,0,160,160);P.photo=c.toDataURL('image/jpeg',.8);sv('hudud:p',P);pav()};im.src=r.result};r.readAsDataURL(f)};
+[['pn','name'],['pr','region'],['pp','phone'],['pe','email'],['pi','insta']].forEach(function(f){$(f[0]).oninput=function(){P[f[1]]=this.value;sv('hudud:p',P);schedSync()}});
+$('ph').onchange=function(){var f=this.files[0];if(!f)return;var r=new FileReader();r.onload=function(){var im=new Image();im.onload=function(){var c=document.createElement('canvas'),s=Math.min(im.width,im.height);c.width=c.height=160;c.getContext('2d').drawImage(im,(im.width-s)/2,(im.height-s)/2,s,s,0,0,160,160);P.photo=c.toDataURL('image/jpeg',.8);sv('hudud:p',P);pav();schedSync()};im.src=r.result};r.readAsDataURL(f)};
 function rMenu(){$('mL').value=P.lang;$('mT').value=P.theme;$('gc').value=P.gc;$('gs').value=P.gs;$('mh').value=P.h;$('mw').value=P.w}
 $('mL').onchange=function(){P.lang=this.value;sv('hudud:p',P);lang()};$('mT').onchange=function(){P.theme=this.value;sv('hudud:p',P);theme()};
 [['gc','gc'],['gs','gs'],['mh','h'],['mw','w']].forEach(function(f){$(f[0]).oninput=function(){var v=+this.value;P[f[1]]=v>0?v:(f[1]==='h'||f[1]==='w'?'':def[f[1]]);sv('hudud:p',P)}});
@@ -166,12 +167,44 @@ function theme(){if(P.theme==='auto')document.documentElement.removeAttribute('d
 function lang(){document.documentElement.lang=P.lang;document.querySelectorAll('[data-i]').forEach(function(e){e.textContent=t(e.dataset.i)});
  $('pn').placeholder=t('pname');$('pr').placeholder=t('region');$('pp').placeholder=t('phone');$('pe').placeholder=t('email');$('pi').placeholder=t('insta');$('q').placeholder=t('searchPh');
  var o=$('mT').options;o[0].text=t('auto');o[1].text=t('dark');o[2].text=t('light');$('mS').textContent=t('test');$('mD').textContent=t('wipe');$('mI').textContent=t('install');
- btn();draw();rAct();rAch();pav()}
+ btn();draw();rAct();rAch();pav();lang2()}
 document.querySelectorAll('#lang button').forEach(function(b){b.onclick=function(){P.lang=b.dataset.l;sv('hudud:p',P);sv('hudud:lang',1);$('lang').style.display='none';lang()}});
 if(!hasLang)$('lang').style.display='flex';
 var dp=null;window.addEventListener('beforeinstallprompt',function(e){e.preventDefault();dp=e;$('mI').style.display='block'});
 $('mI').onclick=function(){if(dp){dp.prompt();dp=null}$('mI').style.display='none'};
 if('serviceWorker' in navigator)window.addEventListener('load',function(){try{navigator.serviceWorker.register('sw.js')}catch(e){}});
+var SB=null,U=null,syT=null,qT=null;
+try{SB=supabase.createClient('https://nsecuzpthdypvqiremgu.supabase.co','sb_publishable_uvO1x11D2RDn51eK_sHecg_7hpiKKPf')}catch(e){}
+function aMsg(m){$('aM').textContent=m||''}
+function lang2(){$('au').placeholder=t('uname');$('ap').placeholder=t('pass')}
+function rAuth(){$('aIn').style.display=U?'none':'block';$('aOut').style.display=U?'block':'none';if(U){$('aMail').textContent=U.email;$('aPub').checked=!!P.pub}}
+function syncP(){if(!SB||!U)return;var u=U.user_metadata&&U.user_metadata.username;if(!u)return;
+ SB.from('profiles').upsert({id:U.id,username:u,name:P.name,region:P.region,photo:P.photo}).then(function(r){if(r.error){aMsg(t('authErr',r.error.message));return}
+  return SB.from('contacts').upsert({id:U.id,phone:P.phone,email:P.email,insta:P.insta,is_public:!!P.pub})})}
+function schedSync(){clearTimeout(syT);syT=setTimeout(syncP,1200)}
+function auth(up){if(!SB)return;var e=$('ae').value.trim(),p=$('ap').value,u=$('au').value.trim().toLowerCase();
+ if(up&&!/^[a-z0-9_]{3,20}$/.test(u)){aMsg(t('authErr',t('uname')));return}
+ aMsg('…');
+ var q=up?SB.auth.signUp({email:e,password:p,options:{data:{username:u}}}):SB.auth.signInWithPassword({email:e,password:p});
+ q.then(function(r){if(r.error){aMsg(t('authErr',r.error.message));return}
+  if(up&&!r.data.session){aMsg(t('okMail'));return}
+  U=r.data.user;aMsg('');rAuth();syncP()})}
+function note(o,k){o.innerHTML='<div class="soon"></div>';o.firstChild.textContent=t(k)}
+function doSearch(){var o=$('qr'),s=$('q').value.trim().replace(/[%,()*]/g,'');o.innerHTML='';
+ if(!U){note(o,'needLogin');return}if(s.length<2)return;
+ SB.from('profiles').select('username,name,region,photo').or('username.ilike.%'+s+'%,name.ilike.%'+s+'%').limit(20).then(function(r){
+  o.innerHTML='';var d=r.data||[];if(!d.length){note(o,'noRes');return}
+  d.forEach(function(x){var c=document.createElement('div');c.className='card';c.style.cssText='display:flex;gap:12px;align-items:center';
+   var a=document.createElement('div');a.style.cssText='width:48px;height:48px;border-radius:50%;background:var(--bg) center/cover;flex:none';
+   if(x.photo)a.style.backgroundImage='url("'+x.photo.replace(/["()\\]/g,'')+'")';
+   var b=document.createElement('div');b.innerHTML='<b></b><br><small style="color:var(--mu)"></small>';
+   b.firstChild.textContent=x.name||x.username;b.lastChild.textContent='@'+x.username+(x.region?' · '+x.region:'');
+   c.appendChild(a);c.appendChild(b);o.appendChild(c)})})}
+$('q').oninput=function(){clearTimeout(qT);qT=setTimeout(doSearch,350)};
+$('aS1').onclick=function(){auth(false)};$('aS2').onclick=function(){auth(true)};
+$('aS3').onclick=function(){SB.auth.signOut().then(function(){U=null;rAuth()})};
+$('aPub').onchange=function(){P.pub=this.checked;sv('hudud:p',P);schedSync()};
+if(SB)SB.auth.getSession().then(function(r){U=r.data.session?r.data.session.user:null;rAuth();syncP()});
 theme();lang();rProf();go('Map');if(S.terr.length)map.fitBounds(L.latLngBounds(S.terr[S.terr.length-1].ring),{maxZoom:18});
 })();
 </script>
