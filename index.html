@@ -115,29 +115,30 @@ var gT=L.layerGroup().addTo(map),trail=L.polyline([],{color:'#e8590c',weight:5})
 me=L.circleMarker([0,0],{radius:8,color:'#fff',weight:3,fillColor:'#1c7ed6',fillOpacity:1}),acc=L.circle([0,0],{radius:0,color:'#1c7ed6',weight:1,fillOpacity:.1}),
 sM=L.circleMarker([0,0],{radius:6,color:'#e8590c',fillColor:'#e8590c',fillOpacity:1});
 map.on('dragstart',function(){S.follow=false});
-function draw(){gT.clearLayers();S.terr.forEach(function(x){L.polygon(x.ring,{color:'#3ddc84',weight:2,fillColor:'#3ddc84',fillOpacity:.35}).addTo(gT)});trail.setLatLngs(S.pts);
+function draw(){gT.clearLayers();S.terr.forEach(function(x){if(U&&x.c)return;L.polygon(x.ring,{color:'#3ddc84',weight:2,fillColor:'#3ddc84',fillOpacity:.35}).addTo(gT)});trail.setLatLngs((S.segs||[]).concat([S.pts]));
  if(S.pts.length){sM.setLatLng(S.pts[0]);if(!map.hasLayer(sM))sM.addTo(map)}else if(map.hasLayer(sM))map.removeLayer(sM);
- var run=S.wid!=null||S.sim;$('pill').style.display=run?'block':'none';$('pill').textContent=fd(plen(S.pts))}
+ var run=S.wid!=null||S.sim;$('pill').style.display=run?'block':'none';$('pill').textContent=fd((S.segs||[]).reduce(function(a,g){return a+plen(g)},0)+plen(S.pts))}
 function btn(){$('bGo').textContent=t(S.wid!=null||S.sim?'stop':'start')}
+function brk(){if(S.pts.length>=2)S.segs=(S.segs||[]).concat([S.pts]).slice(-50);S.pts=[]}
 function onPos(lat,lon,ac,sm,sp){var p=[lat,lon];S.cur=p;me.setLatLng(p);acc.setLatLng(p).setRadius(ac||0);if(!map.hasLayer(me)){me.addTo(map);acc.addTo(map)}
  if(S.follow)map.setView(p,Math.max(map.getZoom(),18));
  if(ac&&ac>40){msg(t('accLow',Math.round(ac)));return}
  var now=Date.now(),l=S.pts[S.pts.length-1],n,cl=false;
  if(!sm){var dt=S.pt?(now-S.pt)/1000:0,v=(S.pp&&dt>0.3)?dist(S.pp,p)/dt:0;
   S.pp=p;S.pt=now;if(sp>v)v=sp;
-  if(v>5.56){S.pts=[];msg(t('tooFast'));draw();return}
-  if(dt>10){S.pts=[];l=null}}
+  if(v>5.56){brk();msg(t('tooFast'));draw();return}
+  if(dt>10){brk();l=null}}
  var add=!l||dist(l,p)>=5;
  if(add){S.pts.push(p);S.lt=now;if(l){var k=dk(new Date());D[k]=(D[k]||0)+dist(l,p);sv('hudud:d',D);schedStats()}}
  n=S.pts.length;
  if(add&&n>=4){var a1=S.pts[n-2];for(var i=n-4;i>=0&&!cl;i--){var X=seg(a1,p,S.pts[i],S.pts[i+1]);if(X){var rg=[X].concat(S.pts.slice(i+1,n-1)),ar=area(rg);
-  if(rg.length>=3&&plen(rg)>=40&&ar>=50){S.terr.push({ring:rg,area:ar,t:Date.now()});sv('hudud:v1',S.terr);msg(t('cross',fa(ar)));S.pts=S.pts.slice(0,i+1).concat([X,p]);cl=true}}}}
- if(!cl&&S.pts.length>=8&&plen(S.pts)>=100&&dist(S.pts[0],p)<=25){var ring=S.pts.slice(),a=area(ring);S.terr.push({ring:ring,area:a,t:Date.now()});sv('hudud:v1',S.terr);msg(t('closed',fa(a)));S.pts=[p]}
+  if(rg.length>=3&&plen(rg)>=40&&ar>=50){S.terr.push({ring:rg,area:ar,t:Date.now()});sv('hudud:v1',S.terr);claimPending();msg(t('cross',fa(ar)));S.pts=S.pts.slice(0,i+1).concat([X,p]);cl=true}}}}
+ if(!cl&&S.pts.length>=8&&plen(S.pts)>=100&&dist(S.pts[0],p)<=25){var ring=S.pts.slice(),a=area(ring);S.terr.push({ring:ring,area:a,t:Date.now()});sv('hudud:v1',S.terr);claimPending();msg(t('closed',fa(a)));S.pts=[p]}
  draw()}
-function stop(){if(S.wid!=null){navigator.geolocation.clearWatch(S.wid);S.wid=null}if(S.sim){clearInterval(S.sim);S.sim=null}wl(false);S.pts=[];btn();draw()}
-function start(){if(S.wid!=null||S.sim)return stop();if(!navigator.geolocation){msg(t('noGps'));return}S.pts=[];S.follow=true;msg(t('searching'));
+function stop(){if(S.wid!=null){navigator.geolocation.clearWatch(S.wid);S.wid=null}if(S.sim){clearInterval(S.sim);S.sim=null}wl(false);S.pts=[];S.segs=[];btn();draw()}
+function start(){if(S.wid!=null||S.sim)return stop();if(!navigator.geolocation){msg(t('noGps'));return}S.pts=[];S.segs=[];S.follow=true;msg(t('searching'));
  S.wid=navigator.geolocation.watchPosition(function(e){onPos(e.coords.latitude,e.coords.longitude,e.coords.accuracy,0,e.coords.speed)},function(er){msg(t('gpsErr',er.message));stop()},{enableHighAccuracy:true,maximumAge:1000,timeout:20000});btn();wl(true)}
-function sim(){if(S.sim||S.wid!=null)return stop();$('menu').style.display='none';go('Map');var b=S.cur||[40.3569,71.2842],n=0,off=S.terr.length*0.0012;S.pts=[];S.follow=true;msg(t('simMsg'));
+function sim(){if(S.sim||S.wid!=null)return stop();$('menu').style.display='none';go('Map');var b=S.cur||[40.3569,71.2842],n=0,off=S.terr.length*0.0012;S.pts=[];S.segs=[];S.follow=true;msg(t('simMsg'));
  S.sim=setInterval(function(){var a=n/36*2*Math.PI;onPos(b[0]+off+0.0006*Math.sin(a),b[1]+0.00078*(Math.cos(a)-1),5,1);n++;if(n>38){clearInterval(S.sim);S.sim=null;btn();draw()}},250);btn()}
 $('bGo').onclick=start;
 $('bLoc').onclick=function(){S.follow=true;if(S.cur){map.setView(S.cur,18);return}navigator.geolocation&&navigator.geolocation.getCurrentPosition(function(e){onPos(e.coords.latitude,e.coords.longitude,e.coords.accuracy)},function(er){msg(t('gpsErr',er.message))},{enableHighAccuracy:true,timeout:15000})};
@@ -170,7 +171,7 @@ $('ph').onchange=function(){var f=this.files[0];if(!f)return;var r=new FileReade
 function rMenu(){$('mShare').checked=P.share!==false;$('mL').value=P.lang;$('mT').value=P.theme;$('gc').value=P.gc;$('gs').value=P.gs;$('mh').value=P.h;$('mw').value=P.w}
 $('mL').onchange=function(){P.lang=this.value;sv('hudud:p',P);lang()};$('mT').onchange=function(){P.theme=this.value;sv('hudud:p',P);theme()};
 [['gc','gc'],['gs','gs'],['mh','h'],['mw','w']].forEach(function(f){$(f[0]).oninput=function(){var v=+this.value;P[f[1]]=v>0?v:(f[1]==='h'||f[1]==='w'?'':def[f[1]]);sv('hudud:p',P)}});
-$('mS').onclick=sim;$('mD').onclick=function(){if(!confirm(t('confirm')))return;S.terr=[];D={};S.pts=[];sv('hudud:v1',[]);sv('hudud:d',{});draw();$('menu').style.display='none';schedStats(1);if(SB&&U)SB.from('territories').delete().eq('user_id',U.id)};
+$('mS').onclick=sim;$('mD').onclick=function(){if(!confirm(t('confirm')))return;S.terr=[];D={};S.pts=[];sv('hudud:v1',[]);sv('hudud:d',{});draw();$('menu').style.display='none';schedStats(1);if(SB&&U)SB.rpc('wipe_me').then(function(){loadOthers()})};
 function theme(){if(P.theme==='auto')document.documentElement.removeAttribute('data-theme');else document.documentElement.setAttribute('data-theme',P.theme)}
 function lang(){document.documentElement.lang=P.lang;document.querySelectorAll('[data-i]').forEach(function(e){e.textContent=t(e.dataset.i)});
  $('pn').placeholder=t('pname');$('pr').placeholder=t('region');$('pp').placeholder=t('phone');$('pe').placeholder=t('email');$('pi').placeholder=t('insta');$('q').placeholder=t('searchPh');
@@ -187,7 +188,7 @@ function aMsg(m){$('aM').textContent=m||''}
 function lang2(){$('au').placeholder=t('uname');$('ap').placeholder=t('pass')}
 function rAuth(){$('aIn').style.display=U?'none':'block';$('aOut').style.display=U?'block':'none';if(U){$('aMail').textContent=U.email;$('aPub').checked=!!P.pub;setTimeout(loadOthers,500)}else{OL.clearLayers()}}
 function syncP(){if(!SB||!U)return;var u=U.user_metadata&&U.user_metadata.username;if(!u)return;
- SB.from('profiles').upsert({id:U.id,username:u,name:P.name,region:P.region,photo:P.photo}).then(function(r){if(r.error){aMsg(t('authErr',r.error.message));return}
+ SB.from('profiles').upsert({id:U.id,username:u,name:P.name,region:P.region,photo:P.photo,share:P.share!==false}).then(function(r){if(r.error){aMsg(t('authErr',r.error.message));return}
   return SB.from('contacts').upsert({id:U.id,phone:P.phone,email:P.email,insta:P.insta,is_public:!!P.pub}).then(function(){syncStats()})})}
 function schedSync(){clearTimeout(syT);syT=setTimeout(syncP,1200)}
 function auth(up){if(!SB)return;var e=$('ae').value.trim(),p=$('ap').value,u=$('au').value.trim().toLowerCase();
@@ -209,26 +210,23 @@ function doSearch(){var o=$('qr'),s=$('q').value.trim().replace(/[%,()*]/g,'');o
    b.firstChild.textContent=x.name||x.username;b.lastChild.textContent='@'+x.username+(x.region?' · '+x.region:'');
    c.appendChild(a);c.appendChild(b);c.onclick=function(){openPv(x)};o.appendChild(c)})})}
 var stT=null,stF=false;
-var OL=L.layerGroup().addTo(map),olT=null;
+var OL=L.layerGroup().addTo(map),olT=null,PC={},cB=false;
 function hcol(id){var h=0;for(var i=0;i<id.length;i++)h=(h*31+id.charCodeAt(i))%250;return 'hsl('+((h+180)%360)+',70%,50%)'}
-function upTerr(){if(!SB||!U)return Promise.resolve();
- var pend=S.terr.filter(function(x){return!x.u}).slice(0,20);if(!pend.length)return Promise.resolve();
- var rows=pend.map(function(x){var r=x.ring,q=r,a=90,b=-90,c=180,d=-180;
-  if(r.length>300){var st=Math.ceil(r.length/300);q=r.filter(function(_,i){return i%st===0})}
-  r.forEach(function(p){a=Math.min(a,p[0]);b=Math.max(b,p[0]);c=Math.min(c,p[1]);d=Math.max(d,p[1])});
-  return{user_id:U.id,t:x.t,ring:q,area:x.area,min_lat:a,max_lat:b,min_lon:c,max_lon:d,is_public:P.share!==false}});
- return SB.from('territories').upsert(rows,{onConflict:'user_id,t'}).then(function(r){if(!r.error){pend.forEach(function(x){x.u=1});sv('hudud:v1',S.terr)}})}
-var PC={};
+if(!ld('hudud:v5',0)){S.terr.forEach(function(x){x.c=1});sv('hudud:v1',S.terr);sv('hudud:v5',1)}
+function claimPending(){if(!SB||!U||cB)return;var x=S.terr.filter(function(y){return!y.c})[0];if(!x)return;cB=true;
+ var r=x.ring,st=Math.max(1,Math.ceil(r.length/500)),q=r.filter(function(_,i){return i%st===0});
+ SB.rpc('claim_loop',{ring:q}).then(function(res){cB=false;
+  if(!res.error||/ring|area/i.test(res.error.message)){x.c=1;sv('hudud:v1',S.terr);loadOthers();claimPending()}}).catch(function(){cB=false})}
 function loadOthers(){if(!SB||!U||map.getZoom()<12){OL.clearLayers();return}
  var b=map.getBounds();
- SB.from('territories').select('user_id,ring,area').neq('user_id',U.id).lte('min_lat',b.getNorth()).gte('max_lat',b.getSouth()).lte('min_lon',b.getEast()).gte('max_lon',b.getWest()).limit(200).then(function(r){
-  var d=r.data||[],need=[];d.forEach(function(x){if(!PC[x.user_id]&&need.indexOf(x.user_id)<0)need.push(x.user_id)});
+ SB.rpc('parcels_in',{minlon:b.getWest(),minlat:b.getSouth(),maxlon:b.getEast(),maxlat:b.getNorth()}).then(function(r){
+  var d=r.data||[],need=[];d.forEach(function(x){if(x.uid!==U.id&&!PC[x.uid]&&need.indexOf(x.uid)<0)need.push(x.uid)});
   var go=function(){OL.clearLayers();var best={};
-   d.forEach(function(x){var c=hcol(x.user_id),p=PC[x.user_id]||{id:x.user_id};
-    L.polygon(x.ring,{color:c,weight:2,fillColor:c,fillOpacity:.3}).addTo(OL).on('click',function(){openPv(p)});
-    if(!best[x.user_id]||x.area>best[x.user_id].area)best[x.user_id]=x});
-   Object.keys(best).forEach(function(id){var x=best[id],p=PC[id]||{id:id},la=0,lo=0;
-    x.ring.forEach(function(q){la+=q[0];lo+=q[1]});la/=x.ring.length;lo/=x.ring.length;
+   d.forEach(function(x){var me=x.uid===U.id,c=me?'#3ddc84':hcol(x.uid),p=PC[x.uid]||{id:x.uid};
+    var g=L.geoJSON({type:'Feature',geometry:x.geo},{style:{color:c,weight:2,fillColor:c,fillOpacity:me?.35:.3}}).addTo(OL);
+    if(!me){g.on('click',function(){openPv(p)});if(!best[x.uid]||x.ar>best[x.uid].ar)best[x.uid]=x}});
+   Object.keys(best).forEach(function(id){var x=best[id],p=PC[id]||{id:id},ring=x.geo.coordinates[0][0],la=0,lo=0;
+    ring.forEach(function(q){lo+=q[0];la+=q[1]});la/=ring.length;lo/=ring.length;
     var e=document.createElement('div'),a=document.createElement('div'),n=document.createElement('div');
     e.className='pm';a.className='pa';n.className='pn';a.style.borderColor=hcol(id);
     if(p.photo)a.style.backgroundImage='url("'+p.photo.replace(/["()\\]/g,'')+'")';else a.textContent=(p.name||p.username||'?').charAt(0).toUpperCase();
@@ -237,7 +235,7 @@ function loadOthers(){if(!SB||!U||map.getZoom()<12){OL.clearLayers();return}
   if(!need.length){go();return}
   SB.from('profiles').select('id,username,name,region,photo').in('id',need).then(function(q){(q.data||[]).forEach(function(p){PC[p.id]=p});go()})})}
 map.on('moveend',function(){clearTimeout(olT);olT=setTimeout(loadOthers,600)});
-$('mShare').onchange=function(){P.share=this.checked;sv('hudud:p',P);if(SB&&U)SB.from('territories').update({is_public:P.share}).eq('user_id',U.id)};
+$('mShare').onchange=function(){P.share=this.checked;sv('hudud:p',P);if(SB&&U)SB.from('profiles').update({share:P.share}).eq('id',U.id)};
 var WL=null;
 function wl(on){try{if(on){if(navigator.wakeLock&&!WL)navigator.wakeLock.request('screen').then(function(l){WL=l;l.addEventListener('release',function(){WL=null})}).catch(function(){})}else if(WL){WL.release();WL=null}}catch(e){}}
 document.addEventListener('visibilitychange',function(){if(document.visibilityState==='visible'&&S.wid!=null)wl(true)});
@@ -245,9 +243,9 @@ function totalArea(){var acc=null,ex=0;
  S.terr.forEach(function(x){var r=x.ring;try{var c=r.map(function(p){return[p[1],p[0]]});c.push(c[0]);var f=turf.polygon([c]);acc=acc?turf.union(acc,f):f}catch(e){ex+=x.area}});
  try{return Math.round((acc?turf.area(acc):0)+ex)}catch(e){var s=0;S.terr.forEach(function(x){s+=x.area});return Math.round(s)}}
 function schedStats(f){if(f)stF=true;if(!stT)stT=setTimeout(function(){stT=null;var g=stF;stF=false;syncStats(g)},15000)}
-function syncStats(f){if(!SB||!U)return Promise.resolve();upTerr();var td=dk(new Date()),tm=0;for(var k in D)tm+=D[k];var ta=totalArea();
+function syncStats(f){if(!SB||!U)return Promise.resolve();claimPending();var td=dk(new Date()),tm=0;for(var k in D)tm+=D[k];var ta=totalArea();
  if(!f&&!tm&&!ta)return Promise.resolve();
- return SB.from('stats').upsert({id:U.id,total_area:ta,total_m:tm,terr_count:S.terr.length,updated_at:new Date().toISOString()}).then(function(){
+ return SB.from('stats').upsert({id:U.id,total_m:tm,terr_count:S.terr.length,updated_at:new Date().toISOString()}).then(function(){
   return SB.from('daily').upsert({user_id:U.id,day:td,meters:D[td]||0},{onConflict:'user_id,day'})})}
 function cnt(q){return q.then(function(r){return r.count||0})}
 function listRows(el,d,v,idf){el.innerHTML='';(d||[]).forEach(function(x,i){var p=x.profiles||{},e=document.createElement('div'),a=document.createElement('span'),b=document.createElement('b');e.className='kv';a.textContent=(i+1)+'. '+(p.name||p.username||'?');b.textContent=v(x);if(U&&idf(x)===U.id)a.style.color='var(--ac)';e.appendChild(a);e.appendChild(b);el.appendChild(e)})}
@@ -257,9 +255,9 @@ function loadRanks(){var td=dk(new Date()),m=D[td]||0,ta=totalArea();
   dq=function(){return SB.from('daily').select('user_id',{count:'exact',head:true}).eq('day',td)},
   sq=function(){return SB.from('stats').select('id',{count:'exact',head:true})};
   if(m>0)Promise.all([cnt(dq().gt('meters',m)),cnt(dq().gt('meters',0))]).then(function(a){bd.textContent='#'+(a[0]+1)+' / '+Math.max(a[1],a[0]+1)});
-  if(ta>0)Promise.all([cnt(sq().gt('total_area',ta)),cnt(sq().gt('total_area',0))]).then(function(a){bt.textContent='#'+(a[0]+1)+' / '+Math.max(a[1],a[0]+1)});
+  SB.rpc('my_area').then(function(r){var a=r.data&&r.data[0];if(!a)return;$('c2').children[2].lastChild.textContent=fa(a.ar);if(a.ar>0)bt.textContent='#'+a.rnk+' / '+Math.max(Number(a.total_n),Number(a.rnk))});
   SB.from('daily').select('user_id,meters,profiles(username,name)').eq('day',td).gt('meters',0).order('meters',{ascending:false}).limit(10).then(function(r){listRows($('t1'),r.data,function(x){return fd(x.meters)},function(x){return x.user_id})});
-  SB.from('stats').select('id,total_area,profiles(username,name)').gt('total_area',0).order('total_area',{ascending:false}).limit(10).then(function(r){listRows($('t2'),r.data,function(x){return fa(x.total_area)},function(x){return x.id})})})}
+  SB.rpc('area_board',{lim:10}).then(function(r){listRows($('t2'),(r.data||[]).map(function(x){return{profiles:{name:x.nm,username:x.uname},ar:x.ar,uid:x.uid}}),function(x){return fa(x.ar)},function(x){return x.uid})})})}
 function openPv(x){var B=$('pvB');$('pvT').textContent='@'+(x.username||'');B.innerHTML='';
  var h=document.createElement('div');h.style.cssText='display:flex;gap:14px;align-items:center;margin-bottom:12px';
  var a=document.createElement('div');a.style.cssText='width:92px;height:92px;border-radius:50%;border:2px solid var(--ac);background:var(--cd) center/cover;flex:none';
